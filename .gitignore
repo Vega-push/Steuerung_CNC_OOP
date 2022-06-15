@@ -1,0 +1,6 @@
+**/.venv
+*.txt
+!requirements.txt
+!messprogramm.txt
+*.csv
+**/.idea
