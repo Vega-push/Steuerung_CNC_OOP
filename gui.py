@@ -1,69 +1,53 @@
-import tkinter
-from tkinter import Tk
+import tkinter as tk
 import tkinter.scrolledtext
 
 
-class Gui(Tk):
+class Gui(tk.Tk):
 
-    def __init__(self, maschine):
-        self.window = Tk()
-        self.window.title("Steuerung CNC")
-        tkinter.mainloop()
+    FONT = ("Impact", 20, "normal")
 
+    def __init__(self):
+        super().__init__()
+        self.title("CNC-Steuerung")
+        self.config(padx=50, pady=50)
 
-# def erstelle_main_window(maschine):
-#     ####################
-#     # Funktionen Buttons
-#     ####################
-#     def clear_infobox():
-#         tf_infobox.delete(1.0, "end")
-#
-#
-#     # def auto_window():
-#         # erstelle_auto_window(master, steuerung, antriebsstrang)
-#
-#     ###################
-#     # Widgets erstellen
-#     ###################
-#     btn_ref = tk.Button(master, bd=3, font="Arial", text="Referenzfahrt", width=30, height=1, command=lambda: controls.np_referenzfahrt(steuerung, antriebsstrang, tf_infobox))
-#     btn_auto = tk.Button(master, bd=3, font="Arial", text="Automatik Modus", width=30, height=1, command=auto_window)
-#     btn_clear_infobox = tk.Button(master, bd=3, font="Arial", text="Clear", width=20, height=1, command=clear_infobox)
-#     mainframe = tk.LabelFrame(master, text="Manuelle Steuerung", labelanchor="n")
-#     tf_infobox = tk.scrolledtext.ScrolledText(master, width=80, height=5, state="normal")
-#     # Achsenauswahl erstellen
-#     axis = tk.IntVar(mainframe, 2)
-#     btn_x = tk.Radiobutton(mainframe, text='X-Achse', variable=axis, value=1, width=30, height=2)
-#     btn_y = tk.Radiobutton(mainframe, text='Y-Achse', variable=axis, value=0, width=30, height=2)
-#     btn_z = tk.Radiobutton(mainframe, text='Z-Achse', variable=axis, value=2, width=30, height=2)
-#     # Geschwindigkeitsauswahl erstellen
-#     geschwindigkeit = tk.IntVar(mainframe, value=1000)
-#     btn_01 = tk.Radiobutton(mainframe, text='500pps', variable=geschwindigkeit, value=500)
-#     btn_1 = tk.Radiobutton(mainframe, text='1000pps', variable=geschwindigkeit, value=1000)
-#     btn_10 = tk.Radiobutton(mainframe, text='1500pps', variable=geschwindigkeit, value=1500)
-#     # Richtungs-Buttons erstellen main_window
-#     btn_plus = tk.Button(mainframe, bd=3, font="Arial", text=" + ", width=10, height=2)
-#     btn_minus = tk.Button(mainframe, bd=3, font="Arial", text=" - ", width=10, height=2)
-#     # gedrückt halten zum Fahren/loslassen zum Stoppen
-#     btn_plus.bind('<ButtonPress-1>', lambda event: controls.manual_mode(steuerung, axis, "+", geschwindigkeit))
-#     btn_plus.bind('<ButtonRelease-1>', lambda event: controls.stop_manual_mode(steuerung, axis, tf_infobox, antriebsstrang))
-#     btn_minus.bind('<ButtonPress-1>', lambda event: controls.manual_mode(steuerung, axis, "-", geschwindigkeit))
-#     btn_minus.bind('<ButtonRelease-1>', lambda event: controls.stop_manual_mode(steuerung, axis, tf_infobox, antriebsstrang))
-#
-#     ##################
-#     # Widgets "packen"
-#     ##################
-#     btn_ref.grid(column=0, row=0, padx=30, pady=15)
-#     btn_auto.grid(column=1, row=0, padx=30, pady=15)
-#     #### frame ####
-#     mainframe.grid(column=0, columnspan=2, row=1, padx=30, pady=15)
-#     btn_x.grid(column=0, columnspan=2, row=0)
-#     btn_y.grid(column=2, columnspan=2, row=0)
-#     btn_z.grid(column=4, columnspan=2, row=0)
-#     btn_01.grid(column=0, columnspan=2, row=1)
-#     btn_1.grid(column=2, columnspan=2, row=1)
-#     btn_10.grid(column=4, columnspan=2, row=1)
-#     btn_plus.grid(column=0, columnspan=3, row=2, padx=30, pady=15)
-#     btn_minus.grid(column=3, columnspan=3, row=2, padx=30, pady=15)
-#     ##############
-#     tf_infobox.grid(column=0, columnspan=2, row=2, padx=30, pady=15)
-#     btn_clear_infobox.grid(column=0, columnspan=2, row=3, padx=30, pady=5)
+        self.btn_ref = tk.Button(bd=5, font=self.FONT, text="Referenzfahrt")
+        self.btn_auto = tk.Button(bd=5, font=self.FONT, text="Automatik Modus")
+        self.btn_clear_infobox = tk.Button(bd=5, font=self.FONT, text="Clear")
+        self.mainframe = tk.LabelFrame(text="Manuelle Steuerung", labelanchor="n")
+        self.tf_infobox = tk.scrolledtext.ScrolledText(width=80, height=5, state="normal")
+
+        self.axis = tk.IntVar(master=self, value=2)
+        self.btn_y = tk.Radiobutton(master=self.mainframe, text='Y-Achse', variable=self.axis, value=0)
+        self.btn_x = tk.Radiobutton(master=self.mainframe, text='X-Achse', variable=self.axis, value=1)
+        self.btn_z = tk.Radiobutton(master=self.mainframe, text='Z-Achse', variable=self.axis, value=2)
+
+        self.geschwindigkeit = tk.IntVar(master=self, value=1000)
+        self.btn_01 = tk.Radiobutton(master=self.mainframe, text='500pps', variable=self.geschwindigkeit, value=500)
+        self.btn_1 = tk.Radiobutton(master=self.mainframe, text='1000pps', variable=self.geschwindigkeit, value=1000)
+        self.btn_10 = tk.Radiobutton(master=self.mainframe, text='1500pps', variable=self.geschwindigkeit, value=1500)
+
+        self.btn_plus = tk.Button(master=self.mainframe, bd=3, font=self.FONT, text=" + ")
+        self.btn_minus = tk.Button(master=self.mainframe, bd=3, font=self.FONT, text=" - ")
+
+        self.btn_plus.bind('<ButtonPress-1>', lambda event: 0)
+        self.btn_plus.bind('<ButtonRelease-1>', lambda event: 0)
+        self.btn_minus.bind('<ButtonPress-1>', lambda event: 0)
+        self.btn_minus.bind('<ButtonRelease-1>', lambda event: 0)
+
+        self.btn_ref.grid(column=0, row=0)
+        self.btn_auto.grid(column=1, row=0)
+        self.mainframe.grid(column=0, columnspan=2, row=1)
+        self.btn_x.grid(column=0, columnspan=2, row=0)
+        self.btn_y.grid(column=2, columnspan=2, row=0)
+        self.btn_z.grid(column=4, columnspan=2, row=0)
+        self.btn_01.grid(column=0, columnspan=2, row=1)
+        self.btn_1.grid(column=2, columnspan=2, row=1)
+        self.btn_10.grid(column=4, columnspan=2, row=1)
+        self.btn_plus.grid(column=0, columnspan=3, row=2)
+        self.btn_minus.grid(column=3, columnspan=3, row=2)
+
+        self.tf_infobox.grid(column=0, columnspan=2, row=2)
+        self.btn_clear_infobox.grid(column=0, columnspan=2, row=3)
+
+        self.mainloop()

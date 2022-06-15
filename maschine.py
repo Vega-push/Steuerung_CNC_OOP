@@ -1,5 +1,4 @@
 import PyTrinamic
-from enum import Enum
 import configparser
 from PyTrinamic.connections.ConnectionManager import ConnectionManager
 from PyTrinamic.modules.TMCM3110.TMCM_3110 import TMCM_3110
