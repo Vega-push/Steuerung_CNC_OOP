@@ -11,8 +11,9 @@ class Gui(tk.Tk):
         self.title("CNC-Steuerung")
         self.config(padx=50, pady=50)
 
+        # create widgets
         self.btn_ref = tk.Button(bd=5, font=self.FONT, text="Referenzfahrt")
-        self.btn_auto = tk.Button(bd=5, font=self.FONT, text="Automatik Modus")
+        self.btn_auto = tk.Button(bd=5, font=self.FONT, text="Automatik Modus", command=self.auto_window)
         self.btn_clear_infobox = tk.Button(bd=5, font=self.FONT, text="Clear")
         self.mainframe = tk.LabelFrame(text="Manuelle Steuerung", labelanchor="n")
         self.tf_infobox = tk.scrolledtext.ScrolledText(width=80, height=5, state="normal")
@@ -37,6 +38,7 @@ class Gui(tk.Tk):
 
         self.btn_ref.grid(column=0, row=0)
         self.btn_auto.grid(column=1, row=0)
+
         self.mainframe.grid(column=0, columnspan=2, row=1)
         self.btn_x.grid(column=0, columnspan=2, row=0)
         self.btn_y.grid(column=2, columnspan=2, row=0)
@@ -51,3 +53,17 @@ class Gui(tk.Tk):
         self.btn_clear_infobox.grid(column=0, columnspan=2, row=3)
 
         self.mainloop()
+
+    def auto_window(self):
+        auto_window = tk.Toplevel(self)
+        auto_window.title("Automatischer Modus")
+
+        self.auto_textbox = tk.Text(master=auto_window, width=40, height=40)
+        self.btn_start = tk.Button(master=auto_window, bd=5, font=self.FONT, text="Start")
+        self.btn_load = tk.Button(master=auto_window, bd=5, font=self.FONT, text="Speichern")
+        self.btn_save = tk.Button(master=auto_window, bd=5, font=self.FONT, text="Laden")
+
+        self.auto_textbox.grid(column=0, columnspan=3, row=0)
+        self.btn_start.grid(column=0, row=1)
+        self.btn_save.grid(column=1, row=1)
+        self.btn_load.grid(column=2, row=1)
