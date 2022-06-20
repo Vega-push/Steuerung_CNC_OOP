@@ -1,13 +1,15 @@
 import tkinter as tk
 import tkinter.scrolledtext
+import time
 
 
 class Gui(tk.Tk):
 
     FONT = ("Impact", 20, "normal")
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__()
+        self.skript = []
         self.title("CNC-Steuerung")
         self.config(padx=50, pady=50)
 
@@ -52,18 +54,34 @@ class Gui(tk.Tk):
         self.tf_infobox.grid(column=0, columnspan=2, row=2)
         self.btn_clear_infobox.grid(column=0, columnspan=2, row=3)
 
-        self.mainloop()
+        #self.mainloop()
 
     def auto_window(self):
         auto_window = tk.Toplevel(self)
         auto_window.title("Automatischer Modus")
 
         self.auto_textbox = tk.Text(master=auto_window, width=40, height=40)
-        self.btn_start = tk.Button(master=auto_window, bd=5, font=self.FONT, text="Start")
+        self.btn_start = tk.Button(master=auto_window, bd=5, font=self.FONT, text="Start", command=self.highlight_text)
         self.btn_load = tk.Button(master=auto_window, bd=5, font=self.FONT, text="Speichern")
-        self.btn_save = tk.Button(master=auto_window, bd=5, font=self.FONT, text="Laden")
+        self.btn_save = tk.Button(master=auto_window, bd=5, font=self.FONT, text="Laden", command=self.skript_laden)
 
         self.auto_textbox.grid(column=0, columnspan=3, row=0)
         self.btn_start.grid(column=0, row=1)
         self.btn_save.grid(column=1, row=1)
         self.btn_load.grid(column=2, row=1)
+
+    def skript_laden(self):
+        with open(file="messprogramm.txt", mode="r") as file:
+            data = file.readlines()
+            self.skript = [item.upper() for item in data]
+        print(self.skript)
+        for row in self.skript:
+            self.auto_textbox.insert(tk.END, row)
+
+    def highlight_text(self):
+        for i in range(len(self.skript)):
+            self.auto_textbox.tag_add("start", f"{i + 1}.0", f"{i + 2}.end")
+            self.auto_textbox.tag_config("start", background="red", foreground="white")
+            self.auto_textbox.update()
+            time.sleep(1)
+            self.auto_textbox.tag_delete("start")
