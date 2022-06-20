@@ -80,7 +80,7 @@ class Gui(tk.Tk):
 
     def highlight_text(self):
         for i in range(len(self.skript)):
-            self.auto_textbox.tag_add("start", f"{i + 1}.0", f"{i + 2}.end")
+            self.auto_textbox.tag_add("start", f"{i + 1}.0", f"{i + 1}.end")
             self.auto_textbox.tag_config("start", background="red", foreground="white")
             self.auto_textbox.update()
             time.sleep(1)
