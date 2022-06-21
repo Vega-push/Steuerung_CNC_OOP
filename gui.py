@@ -1,9 +1,8 @@
 import tkinter as tk
 import tkinter.scrolledtext
+import tkinter.filedialog
 from tkinter import ttk
-import random
 import time
-from maschine import Maschine
 
 
 class Gui(tk.Tk):
@@ -11,10 +10,10 @@ class Gui(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         self.window = super().__init__()
+        self.maschine = args[0]
         self.skript = []
         self.title("CNC-Steuerung")
         self.config(padx=50, pady=50)
-        self.std_np = [0, 0, 0]
 
         # ----------------------------- Register manueller Betrieb ---------------------------------------- #
         # Register
@@ -31,10 +30,11 @@ class Gui(tk.Tk):
 
         # Buttons
         self.btn_ref = tk.Button(master=self.tab_man, bd=5, font=self.FONT,
-                                 text="Referenzfahrt", command=Maschine.np_referenzfahrt)
+                                 text="Referenzfahrt", command=self.maschine.np_referenzfahrt)
         self.btn_np = tk.Button(master=self.tab_man, bd=5, font=self.FONT,
-                                text="NP setzen", command=self.setze_resette_np)
-        self.btn_clear_infobox = tk.Button(master=self.tab_man, bd=5, font=self.FONT, text="Clear")
+                                text="NP setzen", command=lambda: self.maschine.setze_resette_np(self.btn_np))
+        self.btn_clear_infobox = tk.Button(master=self.tab_man, bd=5, font=self.FONT,
+                                           text="Clear", command=self.loesche_infobox)
         self.btn_plus = tk.Button(master=self.mainframe, bd=3, font=self.FONT, text=" + ", width=4)
         self.btn_minus = tk.Button(master=self.mainframe, bd=3, font=self.FONT, text=" - ", width=4)
 
@@ -55,10 +55,14 @@ class Gui(tk.Tk):
         self.btn_10 = tk.Radiobutton(master=self.mainframe, text='1500pps',
                                      variable=self.geschwindigkeit, value=1500, width=23)
 
-        self.btn_plus.bind('<ButtonPress-1>', lambda event: 0)
-        self.btn_plus.bind('<ButtonRelease-1>', lambda event: 0)
-        self.btn_minus.bind('<ButtonPress-1>', lambda event: 0)
-        self.btn_minus.bind('<ButtonRelease-1>', lambda event: 0)
+        self.btn_plus.bind('<ButtonPress-1>',
+                           lambda event: self.maschine.manual_mode(self.axis, "+", self.geschwindigkeit))
+        self.btn_plus.bind('<ButtonRelease-1>',
+                           lambda event: self.maschine.stop_manual_mode(self.axis, self.tf_infobox))
+        self.btn_minus.bind('<ButtonPress-1>',
+                            lambda event: self.maschine.manual_mode(self.axis, "-", self.geschwindigkeit))
+        self.btn_minus.bind('<ButtonRelease-1>',
+                            lambda event: self.maschine.stop_manual_mode(self.axis, self.tf_infobox))
 
         # Platziere Widgets
         self.tab_control.grid(column=0, row=0)
@@ -81,9 +85,11 @@ class Gui(tk.Tk):
         # ----------------------------- Register Automatikbetrieb ---------------------------------------- #
         # Buttons
         self.btn_start = tk.Button(master=self.tab_auto, bd=5, font=self.FONT,
-                                   text="Start", command=self.highlight_text)
-        self.btn_load = tk.Button(master=self.tab_auto, bd=5, font=self.FONT, text="Speichern")
-        self.btn_save = tk.Button(master=self.tab_auto, bd=5, font=self.FONT, text="Laden", command=self.skript_laden)
+                                   text="Start", command=self.starte_programm)
+        self.btn_load = tk.Button(master=self.tab_auto, bd=5, font=self.FONT,
+                                  text="Speichern", command=self.skript_speichern)
+        self.btn_save = tk.Button(master=self.tab_auto, bd=5, font=self.FONT,
+                                  text="Laden", command=self.skript_laden)
         self.single_flag = tk.IntVar()
         self.check_single = tk.Checkbutton(master=self.tab_auto, bd=3, font="Arial",
                                            text="Schrittmodus", variable=self.single_flag)
@@ -101,42 +107,32 @@ class Gui(tk.Tk):
         # ----------------------------- Register manueller Betrieb ---------------------------------------- #
         self.hilfe_box = tk.scrolledtext.ScrolledText(master=self.tab_hilfe, width=70, height=30, state="normal")
         self.hilfe_box.pack()
+        self.hilfe_laden()
 
-    def setze_resette_np(self):
-        """
-        setze oder resette die NP der Achsen an der aktuellen Position.
-        Bevor NP's gesetzt werden, wird die aktuelle Achsposition gepseichert,
-        um später die standardmäßigen NP's wiederherstellen zu können.
-        """
-        if self.btn_np["text"] == "NP setzen":
-            # lese aktuelle Werte ein
-            self.std_np = [random.randint(0, 20), random.randint(0, 20), random.randint(0, 20)]
-            # setze NP hier
-            print("x - 0 gesetzt")
-            print("y - 0 gesetzt")
-            print("z - 0 gesetzt")
-            self.btn_np["text"] = "NP resetten"
-        elif self.btn_np["text"] == "NP resetten":
-            # resette Nullpunkt
-            # fahre auf x, y, z = 0 und setze achsposition auf self.xyz-wert
-            print("fahre Achsen auf NP's")
-            print(f"x - {self.std_np[0]} gesetzt")
-            print(f"y - {self.std_np[1]} gesetzt")
-            print(f"z - {self.std_np[2]} gesetzt")
-            self.btn_np["text"] = "NP setzen"
+    def loesche_infobox(self):
+        self.tf_infobox.delete(1.0, "end")
+
+    def hilfe_laden(self):
+        with open(file="Befehlsliste.txt", mode="r") as file:
+            daten = file.readlines()
+            for item in daten:
+                self.hilfe_box.insert(tk.END, item)
+
+    def skript_speichern(self):
+        """speichert den aktuellen Inhalt des Textfeldes in eine .txt Datei"""
+        textfeld_inhalt = self.skriptbox.get(1.0, "end")
+        textfeld_inhalt = textfeld_inhalt.strip()
+        datei = tk.filedialog.asksaveasfile(mode="w", defaultextension="txt", filetypes=[("Text file", "*.txt")])
+        datei.write(textfeld_inhalt)
+        datei.close()
 
     def skript_laden(self):
-        with open(file="messprogramm.txt", mode="r") as file:
-            data = file.readlines()
-            self.skript = [item.upper() for item in data]
-        print(self.skript)
-        for row in self.skript:
-            self.skriptbox.insert(tk.END, row)
+        """laden einer .txt Datei in das Textfeld"""
+        self.skriptbox.delete("1.0", "end")
+        datei = tk.filedialog.askopenfile(mode="r", filetypes=[("Text file", "*.txt")])
+        if datei:
+            self.skriptbox.insert("1.0", datei.read().upper())
+            datei.close()
 
-    def highlight_text(self):
-        for i in range(len(self.skript)):
-            self.skriptbox.tag_add("start", f"{i + 1}.0", f"{i + 1}.end")
-            self.skriptbox.tag_config("start", background="red", foreground="white")
-            self.skriptbox.update()
-            time.sleep(1)
-            self.skriptbox.tag_delete("start")
+    def starte_programm(self):
+        self.maschine.skript_ausfuehren(self.single_flag, self.skriptbox)

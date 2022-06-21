@@ -1,0 +1,18 @@
+ROR (Rotate right):
+ROR, <axis>, <velocity>, <time_to_travel>
+
+ROL (Rotate left):
+ROL, <axis>, <velocity>, <time_to_travel>
+
+MST (Motor stop):
+MST, <axis>
+
+MVP (Move to Position):
+MVP, <ABS|REL>, <axis>, <position|offset>
+
+SAP (Set axis parameter):
+SAP, <parameter number>, <axis>, <value>
+
+WAIT (Wait for an event):
+WAIT, <POS>, <axis>, <ticks>
+ticks --> ticks to wait for timeout, ticks = 0 deactivate
