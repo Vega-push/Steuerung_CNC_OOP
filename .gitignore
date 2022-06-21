@@ -3,5 +3,6 @@
 !requirements.txt
 !messprogramm.txt
 !Befehlsliste.txt
+!Lsg_0_5mm.txt
 *.csv
 **/.idea

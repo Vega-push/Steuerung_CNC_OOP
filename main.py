@@ -2,16 +2,17 @@ from maschine import Maschine
 from connection import Connection
 from gui import Gui
 
-connection = Connection()
-maschine = Maschine(connection.steuerung, connection)
-gui = Gui(maschine)
 
-gui.mainloop()
+def main():
+    # stelle Verbindungen her
+    connection = Connection()
+    # erstelle Maschinenobjekt
+    maschine = Maschine(connection.steuerung, connection)
+    # erstelle User-Interface
+    gui = Gui(maschine)
+    # Endlosschleife für User-Interface
+    gui.mainloop()
 
-# maschine.steuerung.moveTo(0, 350000, 1500)
-# while not (maschine.steuerung.positionReached(0)):
-#     pass
-# maschine.steuerung.moveTo(0, 0, 1500)
-# while not (maschine.steuerung.positionReached(0)):
-#     pass
 
+if __name__ == "__main__":
+    main()
