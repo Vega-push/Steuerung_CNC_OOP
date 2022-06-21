@@ -18,6 +18,7 @@ class Maschine:
         self.cebo = cebo
         self.messdaten = []
         self.index = 0
+        self.startzeit = 0
         self.antrieb = None
         self.achsen_prm = None
         self.std_np = [0, 0, 0]
@@ -61,7 +62,7 @@ class Maschine:
         Referenzfahrt für alle verfügbaren Achsen, jede Achse wird in den Endschalter gefahren,
         von hier wird in die gegenüberliegende Richtung um einen fest in der config.ini gesetzten Betrag verfahren,
         am Ziel angekommen wird der Nullpunkt gesetzt
-        :return:
+        :return: None
         """
         # Zuerst die z-Achse aus dem Weg fahren
         self.steuerung.rotate(2, 2000)
@@ -86,6 +87,7 @@ class Maschine:
                 while not (self.steuerung.getAxisParameter(10, achse)):  # 10 =right limit switch state
                     pass
                 self.steuerung.stop(achse)
+        # notwendig wegen BUG von PyTrinamic-Modul
         self.setze_achsparameter()
 
     def setze_resette_np(self, button):
@@ -188,6 +190,8 @@ class Maschine:
         """
         # skirpt einlesen erfolgreich?
         if self.skript_einlesen(skriptbox):
+            # lege Startzeit fest für Zeitstempel in .csv Datei
+            self.startzeit = time.perf_counter()
             # Einzelschrittbetrieb aktiviert?
             if single_mode.get():
                 # Befehl für Befehl abarbeiten
@@ -213,6 +217,7 @@ class Maschine:
                     skriptbox.update()
                     self.befehlsauswahl(reihe)
                 skriptbox.tag_delete("start")
+            # nach erfolgreichem Abarbeiten des Skripts wird .csv Datei angelegt
             self.messdaten_schreiben(self.messdaten)
 
     def skript_einlesen(self, skriptbox) -> bool:
@@ -371,23 +376,32 @@ class Maschine:
                 return False
 
     def messdaten_updaten(self):
+        """
+        Nach jedem Verfahrbefehl wird eine Liste von Messwerten erstellt,
+        diese Listen werden in eine "nested" List zusammengeführt um später
+        in eine .csv Datei schreiben zu können.
+        :return: None
+        """
         messwerte = [
             self.index,
-            time.perf_counter(),
+            round(time.perf_counter() - self.startzeit, 3),
             self.pps_in_mm(0, self.steuerung.getAxisParameter(1, 0)),
             self.pps_in_mm(1, self.steuerung.getAxisParameter(1, 1)),
             self.pps_in_mm(2, self.steuerung.getAxisParameter(1, 2)),
-            round(self.cebo.messwert_auslesen() * 1000, 6)
+            round(self.cebo.messwert_auslesen() * 1000, 6),
+            round(self.cebo.messwert_auslesen()*5, 6)
         ]
         self.messdaten.append(messwerte)
         self.index += 1
 
-    @staticmethod
-    def messdaten_schreiben(mes_daten):
-        """ Schreiben der Messdaten in eine .csv Datei
-            Parameter: Index / Zeit / Pos x, y / Value
+    def messdaten_schreiben(self, mes_daten):
         """
-        header = ["Index", "Zeit in s", "Pos x in mm", "Pos y in mm", "Pos z in mm", "Value in mV"]
+        Schreiben der Messdaten in eine .csv Datei
+        Parameter: Index / Zeit / Pos x, y, z / Value in mV / Value in T
+        :param mes_daten: liste Messwerte
+        :return: None
+        """
+        header = ["Index", "Zeit in s", "Pos x in mm", "Pos y in mm", "Pos z in mm", "Value in mV", "Value in T"]
         answer = simpledialog.askstring("Input", "Bitte Namen der Messdatei eingeben.")
         # answer is None if user clicks Cancel
         if answer is not None:
@@ -395,3 +409,6 @@ class Maschine:
                 writer = csv.writer(f)
                 writer.writerow(header)
                 writer.writerows(mes_daten)
+        # setze timer und messdaten auf "0"
+        self.startzeit = 0
+        self.messdaten = []
