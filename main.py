@@ -1,8 +1,9 @@
-from maschine import Connection, Maschine
+from maschine import Maschine
+from connection import Connection
 from gui import Gui
 
 connection = Connection()
-maschine = Maschine(connection.steuerung)
+maschine = Maschine(connection.steuerung, connection)
 gui = Gui(maschine)
 
 gui.mainloop()

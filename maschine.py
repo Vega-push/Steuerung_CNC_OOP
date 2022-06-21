@@ -1,26 +1,8 @@
-import PyTrinamic
 import configparser
 import time
-from PyTrinamic.connections.ConnectionManager import ConnectionManager
-from PyTrinamic.modules.TMCM3110.TMCM_3110 import TMCM_3110
+import csv
+from tkinter import simpledialog
 from tkinter import messagebox
-
-
-class Connection:
-    """
-    starte Verbindung mit der Maschine und lege ein Steuerungsobjekt an
-    """
-
-    def __init__(self):
-        PyTrinamic.showInfo()
-        self.connection_manager_TMCM6110 = ConnectionManager()
-        self.interface_TMCM6110 = self.connection_manager_TMCM6110.connect()
-        self.steuerung = TMCM_3110(self.interface_TMCM6110)
-        print("connection start")
-
-    def __del__(self):
-        self.interface_TMCM6110.close()
-        print("connection close")
 
 
 class Maschine:
@@ -31,8 +13,11 @@ class Maschine:
     achsparameter → von config
     enthält
     """
-    def __init__(self, connection):
+    def __init__(self, connection, cebo):
         self.steuerung = connection
+        self.cebo = cebo
+        self.messdaten = []
+        self.index = 0
         self.antrieb = None
         self.achsen_prm = None
         self.std_np = [0, 0, 0]
@@ -78,19 +63,30 @@ class Maschine:
         am Ziel angekommen wird der Nullpunkt gesetzt
         :return:
         """
+        # Zuerst die z-Achse aus dem Weg fahren
+        self.steuerung.rotate(2, 2000)
+        while not (self.steuerung.getAxisParameter(10, 2)):  # 10 =right limit switch state
+            pass
+        self.steuerung.stop(2)
         # fahre jede Achse gegen Referenzschalter und setze NP
         for achse in range(self.steuerung.MOTORS):
-            self.steuerung.rotate(achse, 1500)
+            self.steuerung.rotate(achse, 2000)
             while not (self.steuerung.getAxisParameter(10, achse)):  # 10 =right limit switch state
                 pass
             self.steuerung.stop(achse)
             # fahre max Achsenverfahrweg vom Schalter zurueck
-            self.steuerung.moveBy(achse, -1 * int(self.achsen_max[achse]), 1500)
+            self.steuerung.moveBy(achse, -1 * int(self.achsen_max[achse]), 2000)
             while not (self.steuerung.positionReached(achse)):
                 pass
             self.steuerung.stop(achse)
             # NP setzen
             self.steuerung.setAxisParameter(apType=1, motor=achse, value=0)
+            if achse == 2:
+                self.steuerung.rotate(achse, 2000)
+                while not (self.steuerung.getAxisParameter(10, achse)):  # 10 =right limit switch state
+                    pass
+                self.steuerung.stop(achse)
+        self.setze_achsparameter()
 
     def setze_resette_np(self, button):
         """
@@ -217,12 +213,13 @@ class Maschine:
                     skriptbox.update()
                     self.befehlsauswahl(reihe)
                 skriptbox.tag_delete("start")
+            self.messdaten_schreiben(self.messdaten)
 
     def skript_einlesen(self, skriptbox) -> bool:
         """
         Lese den Inhalt der skriptbox, bereite Daten auf, überprüfe das Skript auf Fehler,
         falls das Skript in Ordnung ist speichere es ab.
-        :param skriptbox: Übergabe um auf Daten des Textfelds zu zugreifen
+        :param skriptbox: Übergabe um auf Daten des Textfelds zuzugreifen
         :return: bool
         """
         inhalt = skriptbox.get(1.0, "end").strip()
@@ -277,14 +274,12 @@ class Maschine:
                 if befehlstyp == "ABS":
                     if self.verfahrgrenze_ueberpruefen(zeile, self.achsen_max[achse]):
                         self.steuerung.moveTo(motor=achse, position=verfahrweg)
-                        print("fahre ABS")
                     else:
                         print("Verfahrgrenzen nicht eingehalten!")
                         exit()
                 elif befehlstyp == "REL":
                     if self.verfahrgrenze_ueberpruefen(zeile, self.achsen_max[achse]):
                         self.steuerung.moveBy(motor=achse, difference=verfahrweg)
-                        print("fahre REL")
                     else:
                         print("Verfahrgrenzen nicht eingehalten!")
                         exit()
@@ -292,9 +287,8 @@ class Maschine:
                 achse = int(zeile[2])
                 while not (self.steuerung.positionReached(achse)):
                     pass
-                print("WARTE")
-                # wenn Position erreicht, Sensor auslesen
-                #messdatenliste_erzeugen(steuerung, maschinendaten)
+                # wenn Position erreicht ist, Sensor auslesen
+                self.messdaten_updaten()
             case "ROR":
                 achse = int(zeile[1])
                 velocity = int(zeile[2])
@@ -305,7 +299,6 @@ class Maschine:
                 max_weg = int(self.achsen_max[achse]) - aktuelle_pos
                 max_verfahrzeit = int(max_weg / v_pps) - 1  # Sicherheitspuffer
                 if max_verfahrzeit > verfahrzeit:
-                    print(verfahrzeit)
                     self.steuerung.rotate(motor=achse, velocity=velocity)
                     time.sleep(verfahrzeit)
                     self.steuerung.stop(achse)
@@ -376,3 +369,29 @@ class Maschine:
             else:
                 messagebox.showerror(message="Inkrementaler Verfahrweg zu groß!")
                 return False
+
+    def messdaten_updaten(self):
+        messwerte = [
+            self.index,
+            time.perf_counter(),
+            self.pps_in_mm(0, self.steuerung.getAxisParameter(1, 0)),
+            self.pps_in_mm(1, self.steuerung.getAxisParameter(1, 1)),
+            self.pps_in_mm(2, self.steuerung.getAxisParameter(1, 2)),
+            round(self.cebo.messwert_auslesen() * 1000, 6)
+        ]
+        self.messdaten.append(messwerte)
+        self.index += 1
+
+    @staticmethod
+    def messdaten_schreiben(mes_daten):
+        """ Schreiben der Messdaten in eine .csv Datei
+            Parameter: Index / Zeit / Pos x, y / Value
+        """
+        header = ["Index", "Zeit in s", "Pos x in mm", "Pos y in mm", "Pos z in mm", "Value in mV"]
+        answer = simpledialog.askstring("Input", "Bitte Namen der Messdatei eingeben.")
+        # answer is None if user clicks Cancel
+        if answer is not None:
+            with open(answer, "w", encoding="UTF8", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(header)
+                writer.writerows(mes_daten)
