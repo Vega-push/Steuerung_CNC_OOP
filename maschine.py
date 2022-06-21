@@ -67,7 +67,7 @@ class Maschine:
             for key in self.achsen_prm:
                 print(self.steuerung.getAxisParameter(int(key), i))
 
-    def np_referenzfahrt(self):
+    def np_referenzfahrt(self) -> None:
         # fahre jede Achse gegen Referenzschalter und setze NP
         achsen = [value for (key, value) in self.antrieb.items() if key == "y_achse"
                   or key == "x_achse" or key == "z_achse"]
@@ -87,7 +87,7 @@ class Maschine:
     def pps_in_mm(self, achse, vpps) -> float:
         """
         Rotatorische Bewegung (pps) in eine translatorische Bewegung (mm).
-        :param achse: Achparameter werden anhand der Achse ausgelesen [int]
+        :param achse: Achsparameter werden anhand der Achse ausgelesen [int]
         :param vpps: Weg in pps der umgerechnet werden soll [int]
         :return: Verfahrweg in mm [float]
         """
@@ -109,3 +109,28 @@ class Maschine:
         steigung = float(self.antrieb["steigung_mm_pro_u"])
         uebersetzung = float(self.antrieb["getriebe_uebersetzung"])
         return int((strecke * (360 / vollschritt) * mic_step_res) / (steigung * uebersetzung))
+
+    def manual_mode(self, achse, richtung, speed):
+        """Achse verfährt so lange, wie der Knopf gedrückt ist"""
+        if richtung == "+":
+            self.steuerung.rotate(achse.get(), speed.get())
+        elif richtung == "-":
+            self.steuerung.rotate(achse.get(), speed.get() * -1)
+
+    def stop_manual_mode(steuerung, achse, text, antriebsstrang):
+        """Knopf loslassen, um Achse zu stoppen"""
+        achsen_verfahrwege = {
+            "0": antriebsstrang["y_max_weg"],
+            "1": antriebsstrang["x_max_weg"],
+            "2": antriebsstrang["z_max_weg"]
+        }
+        steuerung.stop(achse.get())
+        # aktuelle Position und max. Weg je nach Achse im Textfeld anzeigen
+        akt_pos = steuerung.getAxisParameter(1, achse.get())
+        text.delete(1.0, "end")
+        # Ueberlaufproblem mit Achsparameter 1 aktuelle Position
+        if akt_pos > 2147483647:
+            akt_pos = 0
+        text.insert("end",
+                    f"aktuelle Position: {akt_pos}pps = {pps_in_mm(steuerung, antriebsstrang, achse.get(), akt_pos)}mm\n")
+        text.insert("end", "maximaler Weg von 0 - " + achsen_verfahrwege[str(achse.get())] + "pps")
