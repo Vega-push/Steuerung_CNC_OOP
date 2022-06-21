@@ -2,13 +2,16 @@ import tkinter as tk
 import tkinter.scrolledtext
 import tkinter.filedialog
 from tkinter import ttk
-import time
 
 
 class Gui(tk.Tk):
+    """
+    Die Klasse für das User-Interface, "Super"-Klasse ist von Tkinter Tk().
+    Enthält alle Widgets und deren Funktionen.
+    """
     FONT = ("Impact", 20, "normal")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args):
         self.window = super().__init__()
         self.maschine = args[0]
         self.skript = []
@@ -55,6 +58,7 @@ class Gui(tk.Tk):
         self.btn_10 = tk.Radiobutton(master=self.mainframe, text='1500pps',
                                      variable=self.geschwindigkeit, value=1500, width=23)
 
+        # bindet zwei Funktionen an die Knöpfe + und -, drücken und loslassen
         self.btn_plus.bind('<ButtonPress-1>',
                            lambda event: self.maschine.manual_mode(self.axis, "+", self.geschwindigkeit))
         self.btn_plus.bind('<ButtonRelease-1>',
@@ -110,16 +114,28 @@ class Gui(tk.Tk):
         self.hilfe_laden()
 
     def loesche_infobox(self):
+        """
+        löscht den Inhalt der Infobox
+        :return: None
+        """
         self.tf_infobox.delete(1.0, "end")
 
     def hilfe_laden(self):
+        """
+        wird mit der __init__-Methode ausgeführt, lädt eine .txt Datei ins Hilfefenster,
+        die Hilfestellung zum Befehlssatz des Editors enthält
+        :return: None
+        """
         with open(file="Befehlsliste.txt", mode="r") as file:
             daten = file.readlines()
             for item in daten:
                 self.hilfe_box.insert(tk.END, item)
 
     def skript_speichern(self):
-        """speichert den aktuellen Inhalt des Textfeldes in eine .txt Datei"""
+        """
+        speichert den aktuellen Inhalt des Textfeldes in eine .txt Datei
+        :return: None
+        """
         textfeld_inhalt = self.skriptbox.get(1.0, "end")
         textfeld_inhalt = textfeld_inhalt.strip()
         datei = tk.filedialog.asksaveasfile(mode="w", defaultextension="txt", filetypes=[("Text file", "*.txt")])
@@ -127,7 +143,10 @@ class Gui(tk.Tk):
         datei.close()
 
     def skript_laden(self):
-        """laden einer .txt Datei in das Textfeld"""
+        """
+        laden einer .txt Datei in das Textfeld
+        :return:
+        """
         self.skriptbox.delete("1.0", "end")
         datei = tk.filedialog.askopenfile(mode="r", filetypes=[("Text file", "*.txt")])
         if datei:
@@ -135,4 +154,8 @@ class Gui(tk.Tk):
             datei.close()
 
     def starte_programm(self):
+        """
+        startet das aktuelle Skript im Editorfenster
+        :return: None
+        """
         self.maschine.skript_ausfuehren(self.single_flag, self.skriptbox)

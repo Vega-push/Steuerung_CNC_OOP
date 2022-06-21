@@ -42,7 +42,7 @@ class Maschine:
         self.achsen_max = [value for (key, value) in self.antrieb.items()
                            if key == "y_achse" or key == "x_achse" or key == "z_achse"]
 
-    def einlesen_config_daten(self) -> None:
+    def einlesen_config_daten(self):
         """
         laden und abspeichern der Config.ini Datei in dictionaries
         :return: None
@@ -52,20 +52,18 @@ class Maschine:
         self.achsen_prm = {key: value for (key, value) in config["Achsenparameter"].items()}
         self.antrieb = {key: value for (key, value) in config["Antriebsstrang"].items()}
 
-    def setze_achsparameter(self) -> None:
+    def setze_achsparameter(self):
         """
         setzen der Achsenparameter fuer alle verfuegbaren Achsen
         :return: None
         """
         for i in range(self.steuerung.MOTORS):
-            # print(f"fuer die Achse{i}: ")
             for key, value in self.achsen_prm.items():
-                # print(f"Achsenparameter {key}, Wert {value}.")
                 self.steuerung.setAxisParameter(apType=int(key), motor=i, value=int(value))
 
-    def ausgabe_ap(self) -> None:
+    def ausgabe_ap(self):
         """
-        Ausgabe aller eingestellten Achsparameter für alle Achsen
+        Debug-Funktion zur Ausgabe aller eingestellten Achsparameter für alle Achsen
         :return: None
         """
         for i in range(self.steuerung.MOTORS):
@@ -73,7 +71,13 @@ class Maschine:
             for key in self.achsen_prm:
                 print(self.steuerung.getAxisParameter(int(key), i))
 
-    def np_referenzfahrt(self) -> None:
+    def np_referenzfahrt(self):
+        """
+        Referenzfahrt für alle verfügbaren Achsen, jede Achse wird in den Endschalter gefahren,
+        von hier wird in die gegenüberliegende Richtung um einen fest in der config.ini gesetzten Betrag verfahren,
+        am Ziel angekommen wird der Nullpunkt gesetzt
+        :return:
+        """
         # fahre jede Achse gegen Referenzschalter und setze NP
         for achse in range(self.steuerung.MOTORS):
             self.steuerung.rotate(achse, 1500)
@@ -90,9 +94,11 @@ class Maschine:
 
     def setze_resette_np(self, button):
         """
-        setze oder resette die NP der Achsen an der aktuellen Position.
+        Setze oder resette die NP der Achsen an der aktuellen Position.
         Bevor NP's gesetzt werden, wird die aktuelle Achsposition gepseichert,
         um später die standardmäßigen NP's wiederherstellen zu können.
+        :param button: gui-widget
+        :return: None
         """
         if button["text"] == "NP setzen":
             # lese aktuelle NP-Werte ein
@@ -142,14 +148,25 @@ class Maschine:
         return int((strecke * (360 / vollschritt) * mic_step_res) / (steigung * uebersetzung))
 
     def manual_mode(self, achse, richtung, speed):
-        """Achse verfährt so lange, wie der Knopf gedrückt ist"""
+        """
+        Achse verfährt so lange, wie der Knopf gedrückt ist
+        :param achse: Achsenauswahl
+        :param richtung: Richtungsauswahl
+        :param speed: Verfahrgeschwindigkeit
+        :return: None
+        """
         if richtung == "+":
             self.steuerung.rotate(achse.get(), speed.get())
         elif richtung == "-":
             self.steuerung.rotate(achse.get(), speed.get() * -1)
 
     def stop_manual_mode(self, achse, text):
-        """Knopf loslassen, um Achse zu stoppen"""
+        """
+        Knopf loslassen, um Achse zu stoppen
+        :param achse: Achsenauswahl
+        :param text: Übergabe gui-widget
+        :return:
+        """
         achsen_verfahrwege = {
             "0": self.antrieb["y_achse"],
             "1": self.antrieb["x_achse"],
@@ -167,6 +184,12 @@ class Maschine:
                            f" {self.pps_in_mm(achse.get(), int(achsen_verfahrwege[str(achse.get())]))}mm")
 
     def skript_ausfuehren(self, single_mode, skriptbox):
+        """
+        Ausführen des Skriptes im Editor
+        :param single_mode: Einzelschrittbetrieb ja/nein
+        :param skriptbox: Übergabe gui-widget
+        :return: None
+        """
         # skirpt einlesen erfolgreich?
         if self.skript_einlesen(skriptbox):
             # Einzelschrittbetrieb aktiviert?
@@ -218,7 +241,7 @@ class Maschine:
         """
         durchsuche das übergebene Skript nach Fehlern und gebe die Zeile des
         ersten gefunden Fehlers zurück
-        :param skript:
+        :param skript: gui-widget
         :return: bool, int=Zeilennummer vom Fehler
         """
         # konstante Variablen abspeichern
@@ -233,12 +256,19 @@ class Maschine:
         return True, 0
 
     def befehlsauswahl(self, alte_zeile):
+        """
+        Compiler für Skripte, wählt passenden Befehl je nach Eingabe aus
+        :param alte_zeile: Befehlszeile
+        :return: None
+        """
+        # Formatierung Befehl
         zeile = []
         for string in alte_zeile:
             new_string = string.strip()
             zeile.append(new_string)
         befehl = zeile[0]
 
+        # Auswahl Befehlssatz
         match befehl:
             case "MVP":
                 befehlstyp = zeile[1]
@@ -320,8 +350,13 @@ class Maschine:
                 print("Lese digitalen Input!")
 
     def verfahrgrenze_ueberpruefen(self, zeile, grenze):
-        """Überprüfe ob Verfahrbewegungen möglich sind, abhängig ob, die
-         Verfahrbewegung absolut, relativ oder per Koordinateneingabe geschieht"""
+        """
+        Überprüfe ob Verfahrbewegungen möglich sind, abhängig ob, die
+         Verfahrbewegung absolut, relativ oder per Koordinateneingabe geschieht
+        :param zeile: Übergabe Befehl
+        :param grenze: Verfahrgrenze
+        :return: bool
+        """
         typ = zeile[1]
         achse = int(zeile[2])
         weg = int(zeile[3])
