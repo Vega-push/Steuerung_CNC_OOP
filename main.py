@@ -14,5 +14,6 @@ def main():
     gui.mainloop()
 
 
+# main() wird nur verwendet, wenn das Programm nicht als Modul geladen wird
 if __name__ == "__main__":
     main()

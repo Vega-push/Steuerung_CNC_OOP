@@ -3,6 +3,7 @@ import time
 import csv
 from tkinter import simpledialog
 from tkinter import messagebox
+from plot import plot_ausgeben
 
 
 class Maschine:
@@ -382,6 +383,7 @@ class Maschine:
         in eine .csv Datei schreiben zu können.
         :return: None
         """
+        time.sleep(0.2)
         messwerte = [
             self.index,
             round(time.perf_counter() - self.startzeit, 3),
@@ -391,6 +393,7 @@ class Maschine:
             round(self.cebo.messwert_auslesen() * 1000, 6),
             round(self.cebo.messwert_auslesen()*5, 6)
         ]
+        time.sleep(0.2)
         self.messdaten.append(messwerte)
         self.index += 1
 
@@ -410,5 +413,9 @@ class Maschine:
                 writer.writerow(header)
                 writer.writerows(mes_daten)
         # setze timer und messdaten auf "0"
+            plt_answer = messagebox.askquestion("Plotten", "Wollen Sie die Messdaten plotten?")
+            print(plt_answer)
+            if plt_answer == "yes":
+                plot_ausgeben()
         self.startzeit = 0
         self.messdaten = []
