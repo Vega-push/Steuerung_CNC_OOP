@@ -181,6 +181,7 @@ class Maschine:
         text.insert("end", f"aktuelle Position: {akt_pos}pps = {self.pps_in_mm(achse.get(), akt_pos)}mm\n")
         text.insert("end", f"maximaler Weg von 0 - {achsen_verfahrwege[str(achse.get())]}pps ="
                            f" {self.pps_in_mm(achse.get(), int(achsen_verfahrwege[str(achse.get())]))}mm")
+        self.setze_achsparameter()
 
     def skript_ausfuehren(self, single_mode, skriptbox):
         """
@@ -390,8 +391,8 @@ class Maschine:
             self.pps_in_mm(0, self.steuerung.getAxisParameter(1, 0)),
             self.pps_in_mm(1, self.steuerung.getAxisParameter(1, 1)),
             self.pps_in_mm(2, self.steuerung.getAxisParameter(1, 2)),
-            round(self.cebo.messwert_auslesen() * 1000, 6),
-            round(self.cebo.messwert_auslesen()*5, 6)
+            round((self.cebo.messwert_auslesen() - 0.010) * 1_000, 6),
+            round((self.cebo.messwert_auslesen() - 0.010) * 5, 6)
         ]
         time.sleep(0.2)
         self.messdaten.append(messwerte)
