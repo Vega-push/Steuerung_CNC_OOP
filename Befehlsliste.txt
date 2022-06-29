@@ -16,3 +16,7 @@ SAP, <parameter number>, <axis>, <value>
 WAIT (Wait for an event):
 WAIT, <POS>, <axis>, <ticks>
 ticks --> ticks to wait for timeout, ticks = 0 deactivate
+
+pps <--> mm
+512      0.1
+5120     1.0

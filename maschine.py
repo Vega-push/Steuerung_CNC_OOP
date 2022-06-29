@@ -277,7 +277,8 @@ class Maschine:
             case "MVP":
                 befehlstyp = zeile[1]
                 achse = int(zeile[2])
-                verfahrweg = int(zeile[3])
+                # ändern für pps Programmierung int(zeile[3])
+                verfahrweg = self.mm_in_pps(achse, float(zeile[3]))
                 if befehlstyp == "ABS":
                     if self.verfahrgrenze_ueberpruefen(zeile, self.achsen_max[achse]):
                         self.steuerung.moveTo(motor=achse, position=verfahrweg)
@@ -359,7 +360,8 @@ class Maschine:
         """
         typ = zeile[1]
         achse = int(zeile[2])
-        weg = int(zeile[3])
+        # ändern für pps Programmierung int(zeile[3])
+        weg = self.mm_in_pps(achse, float(zeile[3]))
         if typ == "ABS":
             if 0 <= weg <= int(grenze):
                 return True
@@ -413,10 +415,9 @@ class Maschine:
                 writer = csv.writer(f)
                 writer.writerow(header)
                 writer.writerows(mes_daten)
-        # setze timer und messdaten auf "0"
             plt_answer = messagebox.askquestion("Plotten", "Wollen Sie die Messdaten plotten?")
-            print(plt_answer)
             if plt_answer == "yes":
-                plot_ausgeben()
+                plot_ausgeben(answer)
+        # setze timer und messdaten auf "0"
         self.startzeit = 0
         self.messdaten = []
