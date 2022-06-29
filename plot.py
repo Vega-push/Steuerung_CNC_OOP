@@ -7,6 +7,6 @@ def plot_ausgeben(filename):
     y = np.genfromtxt(fname=filename, delimiter=",", skip_header=1, usecols=6)
     plt.plot(x, y, "r")
     plt.grid()
-    plt.xlabel("Verfahrweg in mm")
+    plt.xlabel("Messpunkte")
     plt.ylabel("B-Feld in Tesla")
     plt.show()

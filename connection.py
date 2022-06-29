@@ -34,5 +34,9 @@ class Connection:
             self.cebo.open()
 
     def messwert_auslesen(self):
-        return self.cebo.getSingleEndedInputs()[0].read()
+        value_0 = self.cebo.getSingleEndedInputs()[1].read()
+        value_1 = self.cebo.getSingleEndedInputs()[0].read()
+        value = value_1 - value_0
+        return value
+
 
