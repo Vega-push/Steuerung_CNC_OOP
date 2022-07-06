@@ -314,7 +314,8 @@ class Maschine:
                     # des AP-s aktuelle Pos
                     self.setze_achsparameter()
                 else:
-                    print("Verfahrzeit zu groß!")
+                    messagebox.showerror(message="Verfahrzeit zu groß!")
+                    exit()
             case "ROL":
                 achse = int(zeile[1])
                 velocity = int(zeile[2]) * -1
@@ -329,7 +330,8 @@ class Maschine:
                     self.steuerung.stop(achse)
                     self.setze_achsparameter()
                 else:
-                    print("Verfahrzeit zu groß!")
+                    messagebox.showerror(message="Verfahrzeit zu groß!")
+                    exit()
             case "MST":
                 achse = int(zeile[1])
                 print("Motor stoppt!")

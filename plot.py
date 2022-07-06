@@ -10,3 +10,7 @@ def plot_ausgeben(filename):
     plt.xlabel("Messpunkte")
     plt.ylabel("B-Feld in Tesla")
     plt.show()
+
+
+if __name__ == "__main__":
+    plot_ausgeben("messung1.csv")
