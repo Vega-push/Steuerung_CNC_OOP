@@ -34,9 +34,14 @@ class Connection:
             self.cebo.open()
 
     def messwert_auslesen(self):
-        value_0 = self.cebo.getSingleEndedInputs()[1].read()
-        value_1 = self.cebo.getSingleEndedInputs()[0].read()
-        value = value_1 - value_0
+        value_list_1 = []
+        value_list_0 = []
+        for _ in range(100):
+            value_list_0.append(self.cebo.getSingleEndedInputs()[1].read())
+            value_list_1.append(self.cebo.getSingleEndedInputs()[0].read())
+        mean_0 = sum(value_list_0) / len(value_list_0)
+        mean_1 = sum(value_list_1) / len(value_list_1)
+        value = mean_1 - mean_0
         return value
 
 
