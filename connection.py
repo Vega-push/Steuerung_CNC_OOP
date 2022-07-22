@@ -36,7 +36,8 @@ class Connection:
     def messwert_auslesen(self):
         value_list_1 = []
         value_list_0 = []
-        for _ in range(100):
+        # Anzahl der Wiederholungen definiert die Messanzahl an einem Messpunkt
+        for _ in range(10):
             value_list_0.append(self.cebo.getSingleEndedInputs()[1].read())
             value_list_1.append(self.cebo.getSingleEndedInputs()[0].read())
         mean_0 = sum(value_list_0) / len(value_list_0)
