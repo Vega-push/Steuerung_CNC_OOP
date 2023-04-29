@@ -5,6 +5,7 @@ from gui import Gui
 
 def main():
     # stelle Verbindungen her
+    # test
     connection = Connection()
     # erstelle Maschinenobjekt
     maschine = Maschine(connection.steuerung, connection)
